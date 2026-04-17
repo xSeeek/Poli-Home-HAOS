@@ -12,7 +12,7 @@ Integración personalizada para controlar cerraduras eléctricas **Poli Home** (
 
 | Entidad | Descripción |
 |---|---|
-| **Botón "Abrir"** | Acciona la cerradura eléctrica (apertura momentánea) |
+| **Cerradura** | Aparece como candado en HomeKit/Matter. La acción de "desbloquear" acciona la cerradura momentánea. |
 | **Sensor "Conexión"** | Estado online/offline del dispositivo |
 | **Sensor "Batería baja"** | Alerta cuando la batería está baja |
 

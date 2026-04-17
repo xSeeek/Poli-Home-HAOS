@@ -1,10 +1,10 @@
-"""Button platform for Poli Home — triggers lock open action."""
+"""Lock platform for Poli Home."""
 from __future__ import annotations
 
 import logging
 from typing import Any
 
-from homeassistant.components.button import ButtonEntity
+from homeassistant.components.lock import LockEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -21,45 +21,43 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Poli Home button entities from a config entry."""
+    """Set up Poli Home lock entities from a config entry."""
     coordinator: PoliHomeCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    entities: list[PoliHomeOpenButton] = []
+    entities: list[PoliHomeLock] = []
     for device_id, device_data in coordinator.data.items():
-        # The Hub Poli Connect appears as category "Switch"
-        # Create open buttons for all Switch and DoorLock devices
         category = device_data.get("category", "")
         controller_type = device_data.get("controllerType", "")
         if category in ("Switch", "DoorLock", "Doorlock") or controller_type in ("Switch",):
             entities.append(
-                PoliHomeOpenButton(coordinator, device_id, device_data)
+                PoliHomeLock(coordinator, device_id, device_data)
             )
 
     if not entities:
-        # Fallback: create buttons for all devices in case categories change
+        # Fallback: create locks for all devices in case categories change
         _LOGGER.warning(
             "No Switch/DoorLock devices found by category. "
-            "Creating buttons for all %d devices.",
+            "Creating locks for all %d devices.",
             len(coordinator.data),
         )
         for device_id, device_data in coordinator.data.items():
             entities.append(
-                PoliHomeOpenButton(coordinator, device_id, device_data)
+                PoliHomeLock(coordinator, device_id, device_data)
             )
 
     async_add_entities(entities)
 
 
-class PoliHomeOpenButton(CoordinatorEntity[PoliHomeCoordinator], ButtonEntity):
-    """Button entity to trigger the lock's open action.
+class PoliHomeLock(CoordinatorEntity[PoliHomeCoordinator], LockEntity):
+    """Lock entity to trigger the lock's open action.
 
     The Hub Poli Connect controls an electric lock relay.
     It only supports a momentary open command via Device/SwitchLockUnlock.
-    The lock re-engages automatically when the door is physically closed.
+    We expose it as a LockEntity so HomeKit and Matter handle it securely.
     """
 
-    _attr_icon = "mdi:door-open"
     _attr_has_entity_name = True
+    _attr_name = None  # Use device name implicitly
 
     def __init__(
         self,
@@ -67,15 +65,14 @@ class PoliHomeOpenButton(CoordinatorEntity[PoliHomeCoordinator], ButtonEntity):
         device_id: str,
         device_data: dict[str, Any],
     ) -> None:
-        """Initialize the open button."""
+        """Initialize the lock."""
         super().__init__(coordinator)
         self._device_id = device_id
 
         device_name = device_data.get("description", f"Dispositivo {device_id}")
         home_name = device_data.get("_homeName", "")
 
-        self._attr_unique_id = f"{DOMAIN}_{device_id}_open"
-        self._attr_name = "Abrir"
+        self._attr_unique_id = f"{DOMAIN}_{device_id}_lock"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, device_id)},
             "name": f"{device_name}" + (f" ({home_name})" if home_name else ""),
@@ -88,9 +85,18 @@ class PoliHomeOpenButton(CoordinatorEntity[PoliHomeCoordinator], ButtonEntity):
         params = device_data.get("deviceParameters", {})
         self._endpoint_address = str(params.get("endpointIndex", 2))
 
-    async def async_press(self) -> None:
-        """Handle the button press — send open command to the lock."""
-        _LOGGER.info("Opening lock %s", self._device_id)
+    @property
+    def is_locked(self) -> bool:
+        """Return true if the lock is locked.
+        
+        Since this is a momentary electric strike, we assume it's always locked
+        after the unlock operation is completed.
+        """
+        return True
+
+    async def async_unlock(self, **kwargs: Any) -> None:
+        """Unlock the lock."""
+        _LOGGER.info("Unlocking %s", self._device_id)
         success = await self.coordinator.api.open_lock(
             int(self._device_id),
             endpoint_address=self._endpoint_address,
@@ -98,4 +104,9 @@ class PoliHomeOpenButton(CoordinatorEntity[PoliHomeCoordinator], ButtonEntity):
         if success:
             await self.coordinator.async_request_refresh()
         else:
-            _LOGGER.error("Failed to open lock %s", self._device_id)
+            _LOGGER.error("Failed to unlock %s", self._device_id)
+
+    async def async_lock(self, **kwargs: Any) -> None:
+        """Lock the lock."""
+        # No-op: the lock engages automatically after being opened
+        _LOGGER.debug("Lock command ignored for %s (momentary lock)", self._device_id)

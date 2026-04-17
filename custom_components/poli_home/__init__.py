@@ -14,7 +14,7 @@ from .coordinator import PoliHomeCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["button", "binary_sensor"]
+PLATFORMS = ["lock", "binary_sensor"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
