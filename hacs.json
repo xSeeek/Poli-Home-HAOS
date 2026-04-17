@@ -1,0 +1,7 @@
+{
+  "name": "Poli Home",
+  "content_in_root": false,
+  "country": "CL",
+  "homeassistant": "2024.1.0",
+  "render_readme": true
+}

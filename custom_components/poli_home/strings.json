@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Poli Home",
+        "description": "Ingresa tus credenciales de Poli Home para conectar tus cerraduras.",
+        "data": {
+          "email": "Correo electrónico",
+          "password": "Contraseña"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Email o contraseña incorrectos.",
+      "cannot_connect": "No se pudo conectar con el servidor de Poli Home.",
+      "unknown": "Error inesperado. Revisa los logs para más detalles."
+    },
+    "abort": {
+      "already_configured": "Esta cuenta ya está configurada."
+    }
+  }
+}

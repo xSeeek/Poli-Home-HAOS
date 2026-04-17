@@ -1,0 +1,19 @@
+# APK decompilation output
+output_polihome/
+xapk_extracted/
+*.xapk
+
+# Test scripts
+test_login.py
+test_open.py
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
