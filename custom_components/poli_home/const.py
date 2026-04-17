@@ -62,7 +62,7 @@ ENDPOINT_RESEND_EMAIL = "Notification/ResendEmail"
 ENDPOINT_ACCESS_REGISTERS = "AccessControl/GetAccessRegistersForHome"
 
 # --- Integration defaults ---
-DEFAULT_SCAN_INTERVAL = 60  # seconds between status polls
+DEFAULT_SCAN_INTERVAL = 300  # seconds between status polls
 REQUEST_TIMEOUT = 30  # seconds
 
 # --- Config flow keys ---

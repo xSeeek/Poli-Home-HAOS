@@ -19,7 +19,7 @@ PLATFORMS = ["lock", "binary_sensor"]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Poli Home from a config entry."""
-    session = async_get_clientsession(hass, verify_ssl=False)
+    session = async_get_clientsession(hass)
 
     api = PoliHomeApi(
         session=session,

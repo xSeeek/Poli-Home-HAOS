@@ -112,8 +112,6 @@ class PoliHomeLock(CoordinatorEntity[PoliHomeCoordinator], LockEntity):
             # and simulate the physical relay delay
             await asyncio.sleep(3)
             
-            await self.coordinator.async_request_refresh()
-            
         else:
             _LOGGER.error("Failed to unlock %s", self._device_id)
             

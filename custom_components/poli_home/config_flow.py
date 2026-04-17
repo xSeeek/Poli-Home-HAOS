@@ -42,7 +42,7 @@ class PoliHomeConfigFlow(ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
 
             # Test the credentials
-            session = async_get_clientsession(self.hass, verify_ssl=False)
+            session = async_get_clientsession(self.hass)
             api = PoliHomeApi(session, email, password)
 
             try:
