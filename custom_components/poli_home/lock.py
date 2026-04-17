@@ -90,23 +90,40 @@ class PoliHomeLock(CoordinatorEntity[PoliHomeCoordinator], LockEntity):
         """Return true if the lock is locked.
         
         Since this is a momentary electric strike, we assume it's always locked
-        after the unlock operation is completed.
+        unless we are actively unlocking it.
         """
-        return True
+        return not getattr(self, "_is_unlocked", False)
 
     async def async_unlock(self, **kwargs: Any) -> None:
         """Unlock the lock."""
         _LOGGER.info("Unlocking %s", self._device_id)
+        
+        # State transition: Mark as unlocked so HomeKit sees the change
+        self._is_unlocked = True
+        self.async_write_ha_state()
+
         success = await self.coordinator.api.open_lock(
             int(self._device_id),
             endpoint_address=self._endpoint_address,
         )
         if success:
+            import asyncio
+            # Wait 3 seconds to let HomeKit/Matter register the "Unlocked" state
+            # and simulate the physical relay delay
+            await asyncio.sleep(3)
+            
             await self.coordinator.async_request_refresh()
+            
         else:
             _LOGGER.error("Failed to unlock %s", self._device_id)
+            
+        # State transition: Re-lock automatically
+        self._is_unlocked = False
+        self.async_write_ha_state()
 
     async def async_lock(self, **kwargs: Any) -> None:
         """Lock the lock."""
         # No-op: the lock engages automatically after being opened
-        _LOGGER.debug("Lock command ignored for %s (momentary lock)", self._device_id)
+        self._is_unlocked = False
+        self.async_write_ha_state()
+        _LOGGER.debug("Lock command executed for %s (momentary lock)", self._device_id)
