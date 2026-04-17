@@ -98,30 +98,34 @@ class PoliHomeLock(CoordinatorEntity[PoliHomeCoordinator], LockEntity):
         """Unlock the lock."""
         _LOGGER.info("Unlocking %s", self._device_id)
         
-        # State transition: Mark as unlocked so HomeKit sees the change
+        # State transition: Mark as unlocked immediately for HomeKit/Matter
         self._is_unlocked = True
         self.async_write_ha_state()
 
+        # Fire and forget the API call and state revert so the HomeKit/Matter HTTP
+        # response can return immediately without stalling their protocol loops.
+        self.hass.async_create_task(self._async_open_and_reset())
+
+    async def _async_open_and_reset(self) -> None:
+        """Handle the actual API call and revert the state."""
         success = await self.coordinator.api.open_lock(
             int(self._device_id),
             endpoint_address=self._endpoint_address,
         )
-        if success:
-            import asyncio
-            # Wait 3 seconds to let HomeKit/Matter register the "Unlocked" state
-            # and simulate the physical relay delay
-            await asyncio.sleep(3)
-            
-        else:
+        
+        import asyncio
+        # Wait a few seconds to let the ecosystems register the "Unlocked" physical state
+        await asyncio.sleep(3)
+        
+        if not success:
             _LOGGER.error("Failed to unlock %s", self._device_id)
             
-        # State transition: Re-lock automatically
+        # State transition: Re-lock automatically in Home Assistant
         self._is_unlocked = False
         self.async_write_ha_state()
 
     async def async_lock(self, **kwargs: Any) -> None:
         """Lock the lock."""
-        # No-op: the lock engages automatically after being opened
         self._is_unlocked = False
         self.async_write_ha_state()
         _LOGGER.debug("Lock command executed for %s (momentary lock)", self._device_id)
