@@ -21,7 +21,8 @@
       "invalid_auth": "Invalid email or password.",
       "cannot_connect": "Could not connect to the Poli Home server.",
       "unknown": "Unexpected error. Check the logs for details.",
-      "no_devices_selected": "You must select at least one device."
+      "no_devices_selected": "You must select at least one device.",
+      "no_devices_found": "No devices found in your account. Make sure your lock is set up in the Poli Home app."
     },
     "abort": {
       "already_configured": "This account is already configured."

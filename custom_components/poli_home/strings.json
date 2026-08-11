@@ -21,7 +21,8 @@
       "invalid_auth": "Email o contraseña incorrectos.",
       "cannot_connect": "No se pudo conectar con el servidor de Poli Home.",
       "unknown": "Error inesperado. Revisa los logs para más detalles.",
-      "no_devices_selected": "Debes seleccionar al menos un dispositivo."
+      "no_devices_selected": "Debes seleccionar al menos un dispositivo.",
+      "no_devices_found": "No se encontraron dispositivos en tu cuenta. Verifica que tu cerradura esté configurada en la app Poli Home."
     },
     "abort": {
       "already_configured": "Esta cuenta ya está configurada."

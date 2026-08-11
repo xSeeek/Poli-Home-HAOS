@@ -68,26 +68,41 @@ class PoliHomeConfigFlow(ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception("Unexpected error during authentication")
                 errors["base"] = "unknown"
             else:
-                self._email = email
-                self._password = password
-                self._devices = devices
-
-                # If there's only one device, skip selection
-                if len(devices) == 1:
-                    device = devices[0]
-                    device_id = str(device.get("deviceId", ""))
-                    device_name = device.get("description", device_id)
-                    return self.async_create_entry(
-                        title=f"Poli Home - {device_name}",
-                        data={
-                            CONF_EMAIL: email,
-                            CONF_PASSWORD: password,
-                            CONF_DEVICE_IDS: [device_id],
-                        },
+                _LOGGER.info(
+                    "Poli Home login OK. Found %d device(s)", len(devices)
+                )
+                for d in devices:
+                    _LOGGER.info(
+                        "  Device: %s (id=%s, category=%s, online=%s)",
+                        d.get("description"),
+                        d.get("deviceId"),
+                        d.get("category"),
+                        d.get("isOnline"),
                     )
 
-                # Multiple devices — show selection step
-                return await self.async_step_select_devices()
+                if not devices:
+                    errors["base"] = "no_devices_found"
+                else:
+                    self._email = email
+                    self._password = password
+                    self._devices = devices
+
+                    # If there's only one device, skip selection
+                    if len(devices) == 1:
+                        device = devices[0]
+                        device_id = str(device.get("deviceId", ""))
+                        device_name = device.get("description", device_id)
+                        return self.async_create_entry(
+                            title=f"Poli Home - {device_name}",
+                            data={
+                                CONF_EMAIL: email,
+                                CONF_PASSWORD: password,
+                                CONF_DEVICE_IDS: [device_id],
+                            },
+                        )
+
+                    # Multiple devices — show selection step
+                    return await self.async_step_select_devices()
 
         return self.async_show_form(
             step_id="user",
