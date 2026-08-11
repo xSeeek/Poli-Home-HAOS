@@ -27,8 +27,15 @@ async def async_setup_entry(
     """Set up Poli Home binary sensor entities from a config entry."""
     coordinator: PoliHomeCoordinator = hass.data[DOMAIN][entry.entry_id]
 
+    # Get selected device IDs from config entry (v2+)
+    selected_ids = entry.data.get("device_ids")
+
     entities: list[BinarySensorEntity] = []
     for device_id, device_data in coordinator.data.items():
+        # If we have a selection, only create entities for selected devices
+        if selected_ids is not None and device_id not in selected_ids:
+            continue
+
         # Connectivity sensor
         entities.append(
             PoliHomeConnectivitySensor(coordinator, device_id, device_data)

@@ -24,8 +24,16 @@ async def async_setup_entry(
     """Set up Poli Home lock entities from a config entry."""
     coordinator: PoliHomeCoordinator = hass.data[DOMAIN][entry.entry_id]
 
+    # Get selected device IDs from config entry (v2+)
+    # Fall back to all Switch/DoorLock devices for v1 entries
+    selected_ids = entry.data.get("device_ids")
+
     entities: list[PoliHomeLock] = []
     for device_id, device_data in coordinator.data.items():
+        # If we have a selection, only create entities for selected devices
+        if selected_ids is not None and device_id not in selected_ids:
+            continue
+
         category = device_data.get("category", "")
         controller_type = device_data.get("controllerType", "")
         if category in ("Switch", "DoorLock", "Doorlock") or controller_type in ("Switch",):
@@ -34,16 +42,12 @@ async def async_setup_entry(
             )
 
     if not entities:
-        # Fallback: create locks for all devices in case categories change
         _LOGGER.warning(
-            "No Switch/DoorLock devices found by category. "
-            "Creating locks for all %d devices.",
-            len(coordinator.data),
+            "No matching Switch/DoorLock devices found. "
+            "Selected IDs: %s, Available: %s",
+            selected_ids,
+            list(coordinator.data.keys()),
         )
-        for device_id, device_data in coordinator.data.items():
-            entities.append(
-                PoliHomeLock(coordinator, device_id, device_data)
-            )
 
     async_add_entities(entities)
 

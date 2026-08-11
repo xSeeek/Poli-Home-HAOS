@@ -8,12 +8,20 @@
           "email": "Email",
           "password": "Password"
         }
+      },
+      "select_devices": {
+        "title": "Select devices",
+        "description": "Select the devices you want to configure as locks.",
+        "data": {
+          "device_ids": "Devices"
+        }
       }
     },
     "error": {
       "invalid_auth": "Invalid email or password.",
       "cannot_connect": "Could not connect to the Poli Home server.",
-      "unknown": "Unexpected error. Check the logs for details."
+      "unknown": "Unexpected error. Check the logs for details.",
+      "no_devices_selected": "You must select at least one device."
     },
     "abort": {
       "already_configured": "This account is already configured."

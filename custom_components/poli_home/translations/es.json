@@ -8,12 +8,20 @@
           "email": "Correo electrónico",
           "password": "Contraseña"
         }
+      },
+      "select_devices": {
+        "title": "Seleccionar dispositivos",
+        "description": "Selecciona los dispositivos que deseas configurar como cerraduras.",
+        "data": {
+          "device_ids": "Dispositivos"
+        }
       }
     },
     "error": {
       "invalid_auth": "Email o contraseña incorrectos.",
       "cannot_connect": "No se pudo conectar con el servidor de Poli Home.",
-      "unknown": "Error inesperado. Revisa los logs para más detalles."
+      "unknown": "Error inesperado. Revisa los logs para más detalles.",
+      "no_devices_selected": "Debes seleccionar al menos un dispositivo."
     },
     "abort": {
       "already_configured": "Esta cuenta ya está configurada."

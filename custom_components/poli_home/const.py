@@ -68,5 +68,6 @@ REQUEST_TIMEOUT = 30  # seconds
 # --- Config flow keys ---
 CONF_EMAIL = "email"
 CONF_PASSWORD = "password"
+CONF_DEVICE_IDS = "device_ids"
 CONF_ACCESS_TOKEN = "access_token"
 CONF_REFRESH_TOKEN = "refresh_token"
