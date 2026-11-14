@@ -90,6 +90,16 @@ class PoliHomeLock(CoordinatorEntity[PoliHomeCoordinator], LockEntity):
         self._endpoint_address = str(params.get("endpointIndex", 2))
 
     @property
+    def available(self) -> bool:
+        """Return True if the coordinator is healthy and the device is online."""
+        if not super().available:
+            return False
+        device = self.coordinator.data.get(self._device_id)
+        if device is None:
+            return False
+        return bool(device.get("isOnline", False))
+
+    @property
     def is_locked(self) -> bool:
         """Return true if the lock is locked.
         

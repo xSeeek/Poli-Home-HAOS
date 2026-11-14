@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import ssl
 import uuid
 from typing import Any
 
@@ -34,18 +33,6 @@ class PoliHomeConnectionError(PoliHomeApiError):
     """Connection error."""
 
 
-def _create_ssl_context() -> ssl.SSLContext:
-    """Create an SSL context that bypasses certificate verification.
-
-    Yale Connect's server uses a certificate whose CA has Basic Constraints
-    not marked as critical, which causes standard verification to fail.
-    """
-    ssl_ctx = ssl.create_default_context()
-    ssl_ctx.check_hostname = False
-    ssl_ctx.verify_mode = ssl.CERT_NONE
-    return ssl_ctx
-
-
 class PoliHomeApi:
     """Async API client for Poli Home smart locks.
 
@@ -69,7 +56,6 @@ class PoliHomeApi:
         self._account_data: dict[str, Any] | None = None
         self._device_uuid: str = str(uuid.uuid4())
         self._base_url = BASE_URL
-        self._ssl_context = _create_ssl_context()
 
     @property
     def is_authenticated(self) -> bool:
@@ -107,7 +93,6 @@ class PoliHomeApi:
                 params=params,
                 headers=self._headers(),
                 timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
-                ssl=self._ssl_context,
                 **kwargs,
             ) as response:
                 if response.status == 401:
@@ -120,14 +105,13 @@ class PoliHomeApi:
                         params=params,
                         headers=self._headers(),
                         timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
-                        ssl=self._ssl_context,
                         **kwargs,
                     ) as retry_response:
-                        retry_response.raise_for_status()
-                        return await retry_response.json()
+                        await self._raise_with_body(retry_response, method, url, json_data)
+                        return await retry_response.json(content_type=None)
 
-                response.raise_for_status()
-                return await response.json()
+                await self._raise_with_body(response, method, url, json_data)
+                return await response.json(content_type=None)
 
         except aiohttp.ClientResponseError as err:
             if err.status in (401, 403):
@@ -141,6 +125,27 @@ class PoliHomeApi:
             raise PoliHomeConnectionError(
                 f"Connection error: {err}"
             ) from err
+
+    @staticmethod
+    async def _raise_with_body(
+        response: aiohttp.ClientResponse,
+        method: str,
+        url: str,
+        json_data: dict[str, Any] | None,
+    ) -> None:
+        """Raise ClientResponseError including the response body in the log."""
+        if response.status < 400:
+            return
+        body = await response.text()
+        _LOGGER.error(
+            "API %s %s failed: HTTP %s, request=%s, response=%s",
+            method,
+            url,
+            response.status,
+            json_data,
+            body[:1000],
+        )
+        response.raise_for_status()
 
     async def authenticate(self) -> bool:
         """Authenticate with email and password via Account/Login.
@@ -171,7 +176,6 @@ class PoliHomeApi:
                     BRAND_PLATFORM_HEADER: BRAND_PLATFORM_GUID,
                 },
                 timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
-                ssl=self._ssl_context,
             ) as response:
                 response.raise_for_status()
                 data = await response.json()
@@ -238,7 +242,7 @@ class PoliHomeApi:
         _LOGGER.info("Opening lock (switch) %s endpoint %s", device_id, endpoint_address)
 
         try:
-            await self._request(
+            result = await self._request(
                 "POST",
                 ENDPOINT_SWITCH_LOCK_UNLOCK,
                 json_data={
@@ -246,6 +250,12 @@ class PoliHomeApi:
                     "endpointAddress": endpoint_address,
                 },
             )
+            _LOGGER.debug("SwitchLockUnlock response: %s", result)
+            if isinstance(result, dict) and result.get("status") not in (None, 0):
+                _LOGGER.error(
+                    "Lock %s rejected open command: %s", device_id, result
+                )
+                return False
             return True
         except PoliHomeApiError as err:
             _LOGGER.error("Failed to open lock %s: %s", device_id, err)

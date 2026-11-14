@@ -2,8 +2,8 @@
 
 DOMAIN = "poli_home"
 
-# --- API Configuration (from APK decompilation) ---
-BASE_URL = "https://AA-Brands.yaleconnect-services.com/api/YaleConnect/"
+# --- API Configuration (from APK decompilation + GrowthBook flag poli-environment-api-url) ---
+BASE_URL = "https://api.connectservices.assaabloy.com/api/YaleConnect/"
 
 # Auth header name used by the API
 AUTH_HEADER = "access-token"
